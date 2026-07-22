@@ -5,6 +5,8 @@ Small 32-bit protected mode OS written in C and Assembly, originally for a schoo
 Dependencies:
   NASM, CLang
 
+Why almost everything is in one commit, is because I despise version control.
+
 Compiling:
 ```bash
 ./compile.sh
