@@ -2,3 +2,4 @@ stable
 *.bin
 *.elf
 *.o
+*.zip
