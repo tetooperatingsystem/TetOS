@@ -635,7 +635,7 @@ void sh_beep(char parsed[32][32]) {
 
 void sh_help(char parsed[32][32]) {
     printf(
-        "color,cat,wait,read,colors,exec,datetime,timezone,rand,beep,dir,cd,pwd,rline,shutdown,echo,help,cls,col,setfont,setpixel,line,square,text,circle",
+        "color,chgdrv,cat,wait,read,colors,exec,datetime,timezone,rand,beep,dir,cd,pwd,rline,shutdown,echo,help,cls,col,setfont,setpixel,line,square,text,circle",
         terminal_color
     );
 }
