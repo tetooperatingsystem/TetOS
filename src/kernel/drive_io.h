@@ -23,19 +23,26 @@
 #define ATA_MASTER 0x0
 #define ATA_SLAVE  0x1
 
-#define ATA_DATA         0x1F0
-#define ATA_ERROR        0x1F1
-#define ATA_FEATURES     0x1F1
-#define ATA_SECTOR_COUNT 0x1F2
-#define ATA_LBA_LOW      0x1F3
-#define ATA_LBA_MID      0x1F4
-#define ATA_LBA_HIGH     0x1F5
-#define ATA_DRIVE_HEAD   0x1F6
-#define ATA_STATUS       0x1F7
-#define ATA_COMMAND      0x1F7
+#define ATA_DATA         0
+#define ATA_ERROR        1
+#define ATA_FEATURES     1
+#define ATA_SECTOR_COUNT 2
+#define ATA_LBA_LOW      3
+#define ATA_LBA_MID      4
+#define ATA_LBA_HIGH     5
+#define ATA_DRIVE_HEAD   6
+#define ATA_STATUS       7
+#define ATA_COMMAND      7
 #define ATA_CMD_CACHE_FLUSH 0xE7
 
+#define ATA_PRIMARY_IO 0x1F0
+#define ATA_SECONDARY_IO 0x170
+
+#define ATA_PRIMARY_CTRL 0x3F6
+#define ATA_SECONDARY_CTRL 0x376
+
 #define ATA_CMD_WRITE  0x30
+#define ATA_CMD_READ   0x20
 
 typedef enum {
     PRIMARY_D,
@@ -47,7 +54,7 @@ int ata_wait();
 
 void ata_wait_busy();
 
-int ata_wait_drq();
+int ata_wait_drq(uint16_t io);
 
 void ata_read_sectors(uint32_t lba, char* buffer, uint8_t sector_count, uint8_t drive);
 void ata_write_sectors(uint32_t lba, char* buffer, uint8_t sector_count, uint8_t drive);

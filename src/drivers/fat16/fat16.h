@@ -159,15 +159,11 @@ typedef struct {
 } __attribute__((packed)) LongFileName;
 
 void read_file(char* buffer, const char* path, uint8_t drive);
-void write_file(char* buffer, char* filename);
+void write_file(char* buffer, uint32_t file_size, char* filename);
 
-int all_entries_in_dir(DirectoryEntry* buff, const char* path, uint8_t drive);
-
-uint8_t check_fat(unsigned int cluster);
+// uint8_t check_fat(unsigned int cluster);
 
 void fat16_init(uint8_t drive);
-
-void f16filename_to_normal(char fat[11], char* out);
 
 void list_entries_in_dir(const char* path);
 

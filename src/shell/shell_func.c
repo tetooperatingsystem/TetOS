@@ -53,11 +53,50 @@ SHELL_CMD cmds[] = {
     {"CIRCLE", sh_circle},
     {"COLORS", sh_colors},
     {"WAIT", sh_wait},
-    {"PLAYSONG", sh_playsong},
+    //{"PLAYSONG", sh_playsong},
+    {"CHGDRV", sh_chgdrv},
     {NULL, NULL}
 };
 
+int drive = ATA_SLAVE;
+
 #define SH_COLORS_SIZE 16
+
+int stoi(char* str) {
+    int len = strlen(str);
+    int num = 0;
+
+    for (int i = 0; str[i] != 0; i++) {
+        char ch = str[i];
+        if (ch < '0'  || ch > '9') continue;
+        num = num * 10 + (ch - '0');
+    }
+
+    return num;
+}
+
+
+void sh_chgdrv(char parsed[32][32]) {
+    if (parsed[2][0]==0) {
+        printf("USE: CHGDRV [F/D] [NUMBER]\n",terminal_color);
+        printf("F:FLOPPY; D:DISK",terminal_color);
+        return;
+    }
+    char drs = parsed[1][0];
+
+    if (drs=='F'||drs=='f') {
+        printf("NO FLOPPY SUPPORT",terminal_color);
+    }
+    else if (drs=='D'||drs=='d') {
+        int dr = stoi(parsed[2]);
+        if (dr>3) {
+            printf("ATA ONLY 0-3",terminal_color);
+        }
+        debug("DR:",dr,terminal_color);
+        drive=dr;
+        fat16_init(dr);
+    }
+}
 
 void sh_colors(char parsed[32][32]) {
     int i = 0;
@@ -80,20 +119,7 @@ void sh_colors(char parsed[32][32]) {
         }
     }
 }
-
-int stoi(char* str) {
-    int len = strlen(str);
-    int num = 0;
-
-    for (int i = 0; str[i] != 0; i++) {
-        char ch = str[i];
-        if (ch < '0'  || ch > '9') continue;
-        num = num * 10 + (ch - '0');
-    }
-
-    return num;
-}
-
+/*
 typedef struct {
     int duration;
     int octave;
@@ -117,10 +143,7 @@ int parse_number(const char **p) {
     }
     return value;
 }
-
-void sh_playsong(char parsed[32][32]) {
-
-}
+*/
 
 /*
 void sh_playsong(char parsed[32][32]) {
@@ -140,7 +163,7 @@ void sh_playsong(char parsed[32][32]) {
     }
     char buff[4096];
 
-    read_file(buff,npath,ATA_SLAVE);
+    read_file(buff,npath,drive);
 
     RTTTLDefaults defaults;
 
@@ -190,7 +213,7 @@ void sh_playsong(char parsed[32][32]) {
 
 void sh_wait(char parsed[32][32]) {
     if (parsed[1][0]==0) {
-        printf("USAGE: Wait [MS]",terminal_color);
+        printf("USAGE:Wait[S]",terminal_color);
         return;
     }
     wait(stoi(parsed[1]));
@@ -225,7 +248,7 @@ void sh_rline(char parsed[32][32]) {
 
     char buff[8192];
 
-    read_file(buff, npath, ATA_SLAVE);
+    read_file(buff, npath, drive);
 
     int lines = 0;
     int i = 0;
@@ -267,7 +290,7 @@ void sh_cat(char parsed[32][32]) {
     strappend(npath, filepath);
     strappend(npath, parsed[1]);
 
-    read_file(buff, npath, ATA_SLAVE);
+    read_file(buff, npath, drive);
     DirectoryEntry file = find_file(npath);
     if (file.FileAttributes & 0x10) {
         printf("NO SUCH FILE: ", terminal_color);
@@ -317,10 +340,10 @@ void sh_read(char parsed[32][32]) {
     strappend(npath, parsed[1]);
 
     memset(buff, 0, 16384);
-    read_file(buff, npath, ATA_SLAVE);
+    read_file(buff, npath, drive);
     DirectoryEntry file = find_file(npath);
     if (file.FileAttributes & 0x10) {
-        printf("NO SUCH FILE: ", terminal_color);
+        printf("NO FILE: ", terminal_color);
         printf(npath, terminal_color);
         goto sh_read_done;
     }
@@ -340,20 +363,27 @@ void sh_read(char parsed[32][32]) {
         size_t rows = 0;
 
         int last_row = terminal_row;
-        
+        int xss = 0;
+
         while (buff[i] && rows < height - 1) {
             putchar(buff[i], terminal_color);
-            i++;
-
-            if (terminal_row != last_row) {
+            if (buff[i]=='\n') {
                 rows++;
-                last_row = terminal_row;
+                xss=0;
+            } else {
+                xss++;
+                if (xss>=width) {
+                    xss=0;
+                    rows++;
+                }
             }
+
+            i++;
         }
         terminal_column++;
 
         putchar(' ', vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_RED));
-        printf("SPACE/D: NEXT PAGE, Q: EXIT  A: LAST PAGE   PAGE ", vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_RED));
+        printf("SPACE/D: NEXT, Q: EXIT  A: LAST   PAGE ", vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_RED));
         printf(itos_h(page), vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_RED));
         putchar(' ', vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_RED));
         write(npath, strlen(npath), vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_RED));
@@ -383,16 +413,21 @@ void sh_read(char parsed[32][32]) {
             for (int p = 1; p < page; p++) {
                 size_t tmp = offset;
                 size_t rows = 0;
-                int last_row = 0;
-
-                do {
-                    tmp++;
-                    if (terminal_row != last_row) {
-                        rows ++;
-                        last_row = terminal_row;
+                int xss = 0;
+                    if (buff[tmp]=='\n') {
+                        rows++;
+                        xss=0;
+                    } else {
+                        xss++;
+                        if (xss>=width) {
+                            xss=0;
+                            rows++;
+                        }
                     }
-                } while (buff[tmp] && rows < height - 1);
-                offset = (tmp-offset);
+                do {
+
+                } while (buff[tmp] && rows < height - 2);
+                offset = tmp;
             }
         }
         else goto wait_for_input;
@@ -423,7 +458,7 @@ void sh_exec(char parsed[32][32]) {
 
     if (memcmp(&file.Filename[8], "TTO", 3)) {
         char buff[16384];
-        read_file(buff, npath, ATA_SLAVE);
+        read_file(buff, npath, drive);
         size_t len = strlen(buff);
 
         char line[1055];
@@ -443,7 +478,7 @@ void sh_exec(char parsed[32][32]) {
         return;
     }
 
-    read_file(NULL, npath, ATA_SLAVE);
+    read_file(NULL, npath, drive);
 
     void (*entry)()  = (void(*)()) NULL;
     
@@ -600,7 +635,7 @@ void sh_beep(char parsed[32][32]) {
 
 void sh_help(char parsed[32][32]) {
     printf(
-        "color,cat,wait,read,colors,exec,datetime,timezone,rand,beep,dir,cd,pwd,rline,shutdown,echo,help,cls,playsong,col,setfont,setpixel,line,square,text,circle",
+        "color,cat,wait,read,colors,exec,datetime,timezone,rand,beep,dir,cd,pwd,rline,shutdown,echo,help,cls,col,setfont,setpixel,line,square,text,circle",
         terminal_color
     );
 }

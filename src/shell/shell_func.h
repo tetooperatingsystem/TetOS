@@ -41,11 +41,11 @@ void sh_help(char parsed[32][32]);
 
 void sh_cls(char parsed[32][32]);
 
-void sh_playsong(char parsed[32][32]);
-
 void sh_col(char parsed[32][32]);
 
 void sh_setfont(char parsed[32][32]);
+
+void sh_chgdrv(char parsed[32][32]);
 
 // GRAPHICS
 

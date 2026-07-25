@@ -104,38 +104,6 @@ void format_name(const char* input, char out[11]) {
     }
 }
 
-void LFNtoName(LongFileName* lfn, char* name) {
-    int offset = lfn->entry_order & 0x1F;
-    int out = (offset-1)*13;
-
-    uint16_t* parts[] = {
-        lfn->first_characters,
-        lfn->mid_characters,
-        lfn->last_characters
-    };
-
-    int lengths[] = {5,6,2};
-
-    for (int p=0; p<3; p++) {
-        for (int i=0; i<lengths[p]; i++) {
-            uint16_t ch = parts[p][i];
-
-            // End
-            if (ch==0x0000||ch==0xFFFF) {
-                name[out]='\0';
-                return;
-            }
-
-            if (ch>=0x7F) {
-                name[out]=='?';
-            }
-            else {
-                name[out]==(char)ch;
-            }
-        }
-    }
-}
-
 DirectoryEntry find_file(char* filepath) {
     char dirs[32][32];
     int count = separatebyslashes(filepath, dirs);
@@ -272,13 +240,6 @@ void list_entries_in_dir(const char* path) {
                 if (e.FileAttributes==0xF) {
                     // LFN
                     continue;
-                    char name[260] = {0};
-                    LongFileName* lfn = ((LongFileName*) &e);
-                    LFNtoName(lfn, name);
-                    write(name, 40, terminal_color);
-                    putchar('\n', terminal_color);
-                    j++;
-                    continue;
                 }
                 else {
                     memcpy(displayed, e.Filename, 11);
@@ -299,8 +260,8 @@ void list_entries_in_dir(const char* path) {
     }
 }
 
-/*
-void write_file(char* buffer, char* filename) {
+void write_file(char* buffer, uint32_t file_size, char* filename) {
+    /*
     // Find free cluster
 
     uint16_t free_cluster = 0;
@@ -314,18 +275,45 @@ void write_file(char* buffer, char* filename) {
 
     free_cluster_found:
 
-    // The find_file() function returns the last entry it could find, so in /Home/Files/A.TXT if it couldn't find A.TXT, it returns /Home/Files
-    DirectoryEntry directory = find_file(filename);
-    if (!(directory.FileAttributes&0x10)) {
-        // If not a directory (file exists), directory shall be filename + ..
-        char pp[128];
-        strappend(pp,filename);
-        //  Home/Files/AAA.TXT/.. (/Home)
-        strappend(pp,"/..");
-        directory=find_file(pp);
+    uint32_t cluster_size = bpb.SectorsPerCluster * bpb.BytesPerSector;
+    uint32_t clusters_needed = (file_size + cluster_size - 1) / cluster_size;
+
+    // supporting max 64 clusters - (512*64*4) around 131072 bytes
+    uint16_t clusters[64];
+    int count = 0;
+
+    for (uint16_t c = 2; c < f16_data.ClusterCount; c++) {
+        if (get_fat_entry(c)==0) {
+            clusters[count++]=c;
+            if(count==clusters_needed) break;
+        }
+    }
+
+    if (count != clusters_needed) {
+        printf("COULD NOT WRITE TO DISK; DISK FULL.", terminal_color);
+        return;
+    }
+
+    for (int i = 0; i < clusters_needed - 1; i++) {
+        uint32_t fat_offset = clusters[i] * sizeof(uint16_t);
+        
+        uint32_t sector_offset = fat_offset / bpb.BytesPerSector;
+        uint32_t entry_offset = fat_offset % bpb.BytesPerSector;
+
+        uint8_t buffer[512];
+
+        for (uint8_t fat = 0; fat < bpb.FATAmount; fat++) {
+            uint32_t fat_sector = bpb.ReservedSectors + fat * bpb.SectorsPerFAT + sector_offset;
+
+            ata_read_sectors(fat_sector, buffer, 1, F16_DRIVE);
+
+            *(uint16_t*)(buffer + entry_offset) = clusters[i+1];
+            FAT_TABLE[entry_offset] = clusters[i+1];
+
+            ata_write_sectors(fat_sector, buffer, 1, F16_DRIVE);
+        }
     }
 
     char dir_buff[512]={0};
-
+    */
 }
-*/
