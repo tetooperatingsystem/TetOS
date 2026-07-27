@@ -437,7 +437,7 @@ void term_init( void ) {
     terminal_row = 0;
     terminal_column = 0;
     term_setcolor(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
-	printf("TERMINAL initialized!\n", terminal_color);
+	//printf("TERMINAL initialized!\n", terminal_color);
 }
 
 uint8_t term_get_bg_color() {

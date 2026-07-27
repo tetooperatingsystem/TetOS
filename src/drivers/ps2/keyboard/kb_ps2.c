@@ -45,7 +45,7 @@ void ps2_kb_init() {
     ps2_kb_BUFF[0] = '\0';
     KeyState = (key_state) {false, false, false, false, false, false, false};
 
-    printf("PS/2 KEYBOARD initialized!\n", terminal_color);
+    //printf("PS/2 KEYBOARD initialized!\n", terminal_color);
 };
 
 void process_keypress(scancode_t sc) {

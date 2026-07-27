@@ -8,7 +8,7 @@
 bool VGA_ON = false;
 
 void vga_init() {
-    printf("VGA Initialized!\n", terminal_color);
+    //printf("VGA Initialized!\n", terminal_color);
     VGA_ON = (bool) (*(uint8_t*) 0x9990);
     // ENABLE DISPLAY
     inb(0x3DA);
