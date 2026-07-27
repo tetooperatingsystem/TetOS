@@ -44,7 +44,7 @@ CMOS_T read_rtc(void)
         cur.month         = cmos_read(CMOS_REG_MONTH);
         cur.year          = cmos_read(CMOS_REG_YEAR);
 
-    } while (memcmp(&last, &cur, sizeof(CMOS_T)) != 0);
+    } while (memcmp((char*) (&last), (char*) (&cur), sizeof(CMOS_T)) != 0);
 
     cur.hours += GetTimezone();
 

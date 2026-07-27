@@ -357,11 +357,15 @@ void input_s(char* buffer, size_t buffer_size, char stop_character, uint8_t colo
 void stradd(char* res, char* str1, char* str2) {
 	int pos = 0;
 
-	for (int i = 0; str1[i]; i++) 
-		res[pos++] = str1[pos];
+	for (int i = 0; str1[i]; i++) {
+		pos++;
+		res[pos] = str1[pos-1];
+	}
 
-	for (int i = 0; str2[i]; i++)
-		res[pos++] = str2[pos];
+	for (int i = 0; str2[i]; i++) {
+		pos++;
+		res[pos] = str2[pos-1];
+	}
 
 	res[pos] = '\0';
 }

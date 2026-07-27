@@ -30,7 +30,7 @@ clang --target=i386-elf -ffreestanding -c mem.c -o ../build/mem.o -nostdlib		# m
 nasm -f bin bootloader/boot.s -o ../build/boot.bin
 nasm -f elf32 kernel/kernel_exec.s -o ../build/kernel_exec.o
 
-ld -m elf_i386 -T kernel/linker.ld ../build/kernel_exec.o ../build/kernel.o ../build/rand.o ../build/interrupts_s.o ../build/sound.o ../build/psf.o ../build/vesa.o ../build/vga.o ../build/cmos.o ../build/terminal.o ../build/ports.o ../build/kb_ps2.o ../build/shell.o ../build/shell_func.o ../build/fat16.o ../build/mem.o ../build/drive_io.o ../build/wait.o  ../build/idt.o ../build/interrupts.o -o ../build/kernel.elf 
+ld -m elf_i386 -T kernel/linker.ld ../build/kernel_exec.o ../build/kernel.o ../build/rand.o ../build/interrupts_s.o ../build/sound.o ../build/psf.o ../build/vesa.o ../build/vga.o ../build/cmos.o ../build/terminal.o ../build/ports.o ../build/fat16.o ../build/kb_ps2.o ../build/shell.o ../build/shell_func.o ../build/mem.o ../build/drive_io.o ../build/wait.o  ../build/idt.o ../build/interrupts.o -o ../build/kernel.elf 
 objcopy -O binary ../build/kernel.elf ../build/kernel.bin
 
 truncate -s 65024 ../build/kernel.bin

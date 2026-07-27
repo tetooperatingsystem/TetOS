@@ -18,12 +18,12 @@ PSF_Font Info;
 PSF1_Header Info1;
 
 void PSF_Init(const char* filename) {
-    DirectoryEntry file = find_file(filename);
+    DirectoryEntry file = find_file((char*)filename);
     if (file.FileAttributes & 0x10) {
         // /Sys/Fonts/Font1.PSF - Basic font
-        read_file(FileBuff, "Sys/Fonts/Font1.PSF", ATA_SLAVE);
+        read_file((char*) FileBuff, "Sys/Fonts/Font1.PSF", ATA_SLAVE);
     }
-    else read_file(FileBuff, filename, ATA_SLAVE);
+    else read_file((char*) FileBuff, filename, ATA_SLAVE);
 
     PSF_Font inf = *(PSF_Font*) FileBuff;
     PSF1_Header inf1 = *(PSF1_Header*) FileBuff;

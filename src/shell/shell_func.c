@@ -26,38 +26,6 @@ extern PSF_Font Info;
 
 extern int term_fg, term_bg;
 
-SHELL_CMD cmds[] = {
-    {"COLOR", sh_color},
-    {"CAT", sh_cat},
-    {"READ", sh_read},
-    {"EXEC", sh_exec},
-    {"DIR", sh_dir},
-    {"CD", sh_cd},
-    {"TEXT", sh_text},
-    {"PWD", sh_pwd},
-    {"SHUTDOWN", sh_shutdown},
-    {"ECHO", sh_echo},
-    {"HELP", sh_help},
-    {"CLS", sh_cls},
-    {"COL", sh_col},
-    {"BEEP", sh_beep},
-    {"DATETIME", sh_datetime},
-    {"TIMEZONE", sh_timezone},
-    {"RAND", sh_rand},
-    {"RLINE", sh_rline},
-    {"CLS", sh_cls},
-    {"LINE", sh_line},
-    {"SETFONT", sh_setfont},
-    {"SETPIXEL", sh_setpixel},
-    {"SQUARE", sh_square},
-    {"CIRCLE", sh_circle},
-    {"COLORS", sh_colors},
-    {"WAIT", sh_wait},
-    //{"PLAYSONG", sh_playsong},
-    {"CHGDRV", sh_chgdrv},
-    {NULL, NULL}
-};
-
 int drive = ATA_SLAVE;
 
 #define SH_COLORS_SIZE 16
@@ -73,29 +41,6 @@ int stoi(char* str) {
     }
 
     return num;
-}
-
-
-void sh_chgdrv(char parsed[32][32]) {
-    if (parsed[2][0]==0) {
-        printf("USE: CHGDRV [F/D] [NUMBER]\n",terminal_color);
-        printf("F:FLOPPY; D:DISK",terminal_color);
-        return;
-    }
-    char drs = parsed[1][0];
-
-    if (drs=='F'||drs=='f') {
-        printf("NO FLOPPY SUPPORT",terminal_color);
-    }
-    else if (drs=='D'||drs=='d') {
-        int dr = stoi(parsed[2]);
-        if (dr>3) {
-            printf("ATA ONLY 0-3",terminal_color);
-        }
-        debug("DR:",dr,terminal_color);
-        drive=dr;
-        fat16_init(dr);
-    }
 }
 
 void sh_colors(char parsed[32][32]) {
@@ -210,14 +155,6 @@ void sh_playsong(char parsed[32][32]) {
 
 }
 */
-
-void sh_wait(char parsed[32][32]) {
-    if (parsed[1][0]==0) {
-        printf("USAGE:Wait[S]",terminal_color);
-        return;
-    }
-    wait(stoi(parsed[1]));
-}
 
 void sh_color(char parsed[32][32]) {
     int fg = stoi(parsed[1]);
@@ -382,6 +319,8 @@ void sh_read(char parsed[32][32]) {
         }
         terminal_column++;
 
+        for (int i = terminal_row; i < height-1; i++) { putchar('\n',terminal_color); }
+
         putchar(' ', vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_RED));
         printf("SPACE/D: NEXT, Q: EXIT  A: LAST   PAGE ", vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_RED));
         printf(itos_h(page), vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_RED));
@@ -395,11 +334,11 @@ void sh_read(char parsed[32][32]) {
         }
         wait_for_input:
 
-        scancode_t sc = ps2_kb_wfi();
+        uint8_t sc = ps2_kb_wfi();
 
         if (sc & 0x80) goto wait_for_input;
 
-        char ch = scancode_to_ascii(sc);
+        char ch = scancode_to_ascii((scancode_t)sc);
 
         if (ch == 'q' || ch == 'Q') break;
         else if (ch == ' ' || ch == 'd' || ch == 'D') {
@@ -414,6 +353,7 @@ void sh_read(char parsed[32][32]) {
                 size_t tmp = offset;
                 size_t rows = 0;
                 int xss = 0;
+                do {
                     if (buff[tmp]=='\n') {
                         rows++;
                         xss=0;
@@ -424,9 +364,9 @@ void sh_read(char parsed[32][32]) {
                             rows++;
                         }
                     }
-                do {
+                    tmp++;
 
-                } while (buff[tmp] && rows < height - 2);
+                } while (buff[tmp] && rows < height - 1);
                 offset = tmp;
             }
         }
@@ -635,7 +575,7 @@ void sh_beep(char parsed[32][32]) {
 
 void sh_help(char parsed[32][32]) {
     printf(
-        "color,chgdrv,cat,wait,read,colors,exec,datetime,timezone,rand,beep,dir,cd,pwd,rline,shutdown,echo,help,cls,col,setfont,setpixel,line,square,text,circle",
+        "read README.txt",
         terminal_color
     );
 }
@@ -659,6 +599,30 @@ void sh_col(char parsed[32][32]) {
     printf("############\n", vga_entry_color(fg, bg));   
 }
 
+void sh_chgdrv(char parsed[32][32]) {
+    if (parsed[2][0]==0) {
+        printf("USE: CHGDRV [F/D] [NUMBER]\n",terminal_color);
+        printf("F:FLOPPY; D:DISK",terminal_color);
+        return;
+    }
+    char drs = parsed[1][0];
+
+    if (drs=='F'||drs=='f') {
+        printf("NO FLOPPY SUPPORT",terminal_color);
+    }
+    else if (drs=='D'||drs=='d') {
+        int dr = stoi(parsed[2]);
+        if (dr>3) {
+            printf("ATA ONLY 0-3",terminal_color);
+            return;
+        }
+        debug("DR:",dr,terminal_color);
+        drive=dr;
+        memset(filepath,0,256);
+        filepath[0]='/';
+        fat16_init(dr);
+    }
+}
 
 void sh_text(char parsed[32][32]) {
     if (parsed[4][0]==0) {
@@ -701,6 +665,14 @@ void sh_text(char parsed[32][32]) {
     }
 
     memset(buff,0,512);
+}
+
+void sh_wait(char parsed[32][32]) {
+    if (parsed[1][0]==0) {
+        printf("USAGE:Wait[S]",terminal_color);
+        return;
+    }
+    wait(stoi(parsed[1]));
 }
 
 void sh_square(char parsed[32][32]) {

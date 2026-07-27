@@ -15,7 +15,7 @@ extern char filepath[256];
 
 char cmd[1055];
 
-extern SHELL_CMD cmds[];
+//extern SHELL_CMD cmds[];
 
 
 uint8_t running = 1;
@@ -27,7 +27,36 @@ void str_toupper(char* s) {
     }
 }
 
-
+SHELL_CMD cmds[] = {
+    {"COLOR", sh_color},
+    {"CAT", sh_cat},
+    {"READ", sh_read},
+    {"EXEC", sh_exec},
+    {"DIR", sh_dir},
+    {"CD", sh_cd},
+    {"TEXT", sh_text},
+    {"PWD", sh_pwd},
+    {"SHUTDOWN", sh_shutdown},
+    {"ECHO", sh_echo},
+    {"HELP", sh_help},
+    {"CLS", sh_cls},
+    {"COL", sh_col},
+    {"BEEP", sh_beep},
+    {"WAIT", sh_wait},
+    {"CHGDRV", sh_chgdrv},
+    {"DATETIME", sh_datetime},
+    {"TIMEZONE", sh_timezone},
+    {"RAND", sh_rand},
+    {"RLINE", sh_rline},
+    {"CLS", sh_cls},
+    {"LINE", sh_line},
+    {"SETFONT", sh_setfont},
+    {"CIRCLE", sh_circle},
+    {"SETPIXEL", sh_setpixel},
+    {"SQUARE", sh_square},
+    {"COLORS", sh_colors},
+    {"END", NULL}
+};
 
 void parse() {
     // Cleaning the parsed array
@@ -68,8 +97,17 @@ void process() {
 
     str_toupper(pars);
 
-    for (int i = 0; cmds[i].name != NULL; i++) {
+    for (int i = 0;cmds[i].func!=NULL; i++) {
         SHELL_CMD command = cmds[i];
+
+        //printf(command.name, terminal_color);
+        //putchar('\n',terminal_color);
+
+        /*
+        if (strcmp(command.name, "END")) {
+            break;
+        }
+        */
 
         if (strcmp(command.name, pars)) {
             command.func(parsed);
@@ -85,6 +123,9 @@ void process() {
     strappend(npath, pars);
     strappend(npath, ".BIN");
 
+    printf(npath, terminal_color);
+    putchar('\n',terminal_color);
+
     if (F16_DRIVE == 0) goto end_pr;
 
     DirectoryEntry file = find_file(npath);
@@ -92,6 +133,7 @@ void process() {
     if (file.FileAttributes & 0x10) {
         end_pr:
 
+        memset(npath,0,256);
         printf("COULD NOT EXECUTE: ", terminal_color);
         printf(parsed[0], terminal_color);
         return;

@@ -26,6 +26,7 @@ void init_idt() {
 
     // Remap IRQ
 
+    /*
     outb(0x20, 0x11);
     outb(0xA0, 0x11);
     outb(0x21, 0x20);
@@ -73,9 +74,10 @@ void init_idt() {
     idt_set_gate(63, (uint32_t) irq31, 8, 0x8E);
 
     __asm__ volatile("lidt %0" : : "m"(idtr));
-
-    //outb(0x21,0xFE);
-    //outb(0xA1,0xFE);
+    */
+    
+    //outb(0x21,0xFF);
+    //outb(0xA1,0xFF);
 
     ///asm volatile ("sti");
 }

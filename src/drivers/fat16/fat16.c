@@ -42,7 +42,7 @@ void fat16_init(uint8_t drive) {
 
     int index = bpb.ReservedSectors;
 
-    ata_read_sectors(index, FAT_TABLE, bpb.SectorsPerFAT, F16_DRIVE);
+    ata_read_sectors(index, (char*) FAT_TABLE, bpb.SectorsPerFAT, F16_DRIVE);
 
     f16_data.FirstRootSector = bpb.ReservedSectors + (bpb.SectorsPerFAT * bpb.FATAmount);
     f16_data.RootDirSectors = ((uint32_t) bpb.RootDirectoriesAmount * 32u + (uint32_t) bpb.BytesPerSector - 1u) / (uint32_t)  bpb.BytesPerSector;
@@ -173,7 +173,7 @@ void read_file(char* buffer, const char* path, uint8_t drive) {
     uint16_t cluster = file.first_cluster_number;
 
     if (cluster < 2) {
-        debug("INVALID CLUSTER: ", cluster, vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_RED));
+        debug("NO CLUSTER: ", cluster, vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_RED));
         return;
     }
 
@@ -196,9 +196,9 @@ void list_entries_in_dir(const char* path) {
     uint16_t cluster = 0;
 
     if (!is_root) {
-        dir = find_file(path);
+        dir = find_file((char*) path);
         if (!(dir.FileAttributes & 0x10)) {
-            printf("NOT A DIRECTORY", vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_RED));
+            printf("NOT DIRECTORY", vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_RED));
             return;
         }
 
@@ -206,6 +206,15 @@ void list_entries_in_dir(const char* path) {
     }
 
     char sector[512];
+
+    int i = -1;
+    do {
+        putchar(ebpb.VolumeLabelString[i],terminal_color);
+        i++;
+    } while (ebpb.VolumeLabelString[i]!=' '&&i<11);
+
+    printf(path,terminal_color);
+    putchar('\n',terminal_color);
 
     while (1) {
         uint32_t first_sector;
@@ -237,6 +246,9 @@ void list_entries_in_dir(const char* path) {
 
                 if (first_ch == 0x0) return;
                 if ((unsigned char) first_ch == 0xE5) continue;
+                if (e.FileAttributes==0x8) {//Volume Label
+                    continue;
+                }
                 if (e.FileAttributes==0xF) {
                     // LFN
                     continue;
